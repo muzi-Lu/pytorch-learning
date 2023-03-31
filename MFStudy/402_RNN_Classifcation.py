@@ -11,7 +11,7 @@ BATCH_SIZE = 64
 TIME_STEP = 28
 INPUT_SIZE = 28
 LR = 0.1
-DOWNLOAD_MNIST = False
+DOWNLOAD_MNIST = True
 
 # Prepare the datasets and the dataloader
 # train_data = dsets.MNIST(root)
