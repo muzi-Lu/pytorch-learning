@@ -10,7 +10,7 @@ EPOCH = 2
 BATCH_SIZE = 64
 TIME_STEP = 28
 INPUT_SIZE = 28
-LR = 0.01
+LR = 0.1
 DOWNLOAD_MNIST = False
 
 # Prepare the datasets and the dataloader
