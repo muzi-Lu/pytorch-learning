@@ -6,7 +6,7 @@ import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
 
 # HyperParameters
-EPOCH = 1
+EPOCH = 2
 BATCH_SIZE = 64
 TIME_STEP = 28
 INPUT_SIZE = 28
