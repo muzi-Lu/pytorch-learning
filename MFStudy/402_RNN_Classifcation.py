@@ -13,6 +13,8 @@ INPUT_SIZE = 28
 LR = 0.1
 DOWNLOAD_MNIST = True
 
+# I was changed in dev branch
+
 # Prepare the datasets and the dataloader
 # train_data = dsets.MNIST(root)
 
