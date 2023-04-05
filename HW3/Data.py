@@ -23,7 +23,7 @@ class FoodDataset(Dataset):
         self.files = sorted([os.path.join(path, x) for x in os.listdir(path) if x.endswith(".jpg")])
         if files != None:
             self.files = files
-        transforms = tfm
+        self.transforms = tfm
 
     def __len__(self):
         return len(self.files)
@@ -31,7 +31,7 @@ class FoodDataset(Dataset):
     def __getitem__(self, idx):
         fname = self.files[idx]
         im = Image.open(fname)
-        im = transforms(im)
+        im = self.transforms(im)
 
         try:
             label = int(fname.split("/")[-1].split(" ")[0])
