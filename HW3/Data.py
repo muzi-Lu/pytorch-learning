@@ -66,3 +66,7 @@ class FoodDataset(Dataset):
             label = -1  # test has no label
 
         return im, label
+
+if __name__ == '__main__':
+    test = FoodDataset("/media/benben/0ECABB60A248B50C/HWHomework/datasets/3/train", tfm=train_tfm)
+    test_dl = DataLoader(test, batch_size=32, shuffle=False, num_workers=0, pin_memory=False)
