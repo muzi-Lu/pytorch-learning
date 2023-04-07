@@ -52,3 +52,20 @@ def get_pseudo_labels(dataset, model, threshold=0.65):
         # Filter the data and construct a new dataset.
 
     # # Turn off the eval mode.
+
+train_tfm = transforms.Compose([
+
+        ##### add more transforms here #####
+        transforms.Resize((128, 128)),
+        # transforms.RandomCrop(112), # 这个还要看一下图片大小吧
+        transforms.RandomHorizontalFlip(),
+        transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.1),
+        transforms.RandomRotation(30),
+        ##### added more here #####
+        transforms.ToTensor(),
+    ])
+
+test_tfm = transforms.Compose([
+    transforms.Resize((128, 128)),
+    transforms.ToTensor(),
+])

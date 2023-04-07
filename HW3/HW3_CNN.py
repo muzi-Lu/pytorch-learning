@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import os
@@ -13,10 +14,12 @@ import random
 
 from Data import FoodDataset
 from Model import Classifier
+from Utils import seed, train_tfm, test_tfm
 ##### self-made #####
 
 
 if __name__ == '__main__':
+    seed()
     ##### Configurations #####
     # "Cuda" only when GPUS are available
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -40,22 +43,7 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(model.parameters(), lr=0.0003, weight_decay=1e-5)
     ##### One : Prepare Datasets and Dataloaders #####
 
-    train_tfm = transforms.Compose([
 
-        ##### add more transforms here #####
-        transforms.Resize((128, 128)),
-        # transforms.RandomCrop(112), # 这个还要看一下图片大小吧
-        transforms.RandomHorizontalFlip(),
-        transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.1),
-        transforms.RandomRotation(30),
-        ##### added more here #####
-        transforms.ToTensor(),
-    ])
-
-    test_tfm = transforms.Compose([
-        transforms.Resize((128, 128)),
-        transforms.ToTensor(),
-    ])
     train_set = FoodDataset("/media/benben/0ECABB60A248B50C/HWHomework/datasets/3/train", tfm=train_tfm)
     train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=True)
     valid_set = FoodDataset("/media/benben/0ECABB60A248B50C/HWHomework/datasets/3/valid", tfm=test_tfm)
@@ -79,9 +67,13 @@ if __name__ == '__main__':
         for batch in tqdm(train_loader):
             imgs, labels = batch
             print(imgs.shape, labels.shape)
+            print(imgs.dtype, labels.dtype)
+            print(labels)
+
 
             # put images into model and Forward the data (make sure data and model are on the same device)
             logits = model(imgs.to(device))
+
 
             # Calculate the cross-entropy loss
             loss = criterion(logits, labels.to(device))
