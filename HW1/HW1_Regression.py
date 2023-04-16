@@ -41,6 +41,7 @@ def trainer(train_loader, valid_loader, model, config, device):
     # TODO: Please check https://pytorch.org/docs/stable/optim.html to get more available algorithms.
     # TODO: L2 regularization (optimizer(weight decay...) or implement by your self).
     optimizer = torch.optim.SGD(model.parameters(), lr=config['learning_rate'], momentum=0.7)
+    optimizer = torch.optim.Adam(model.parameters(), lr=config['learning_rate'])
     writer = SummaryWriter()  # Writer of tensoboard.
 
     if not os.path.isdir('./models'):
