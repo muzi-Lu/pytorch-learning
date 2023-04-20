@@ -7,6 +7,7 @@ import torchvision.transforms as transforms
 import numpy
 import matplotlib.pyplot as plt
 
+
 def Unet_feature_map():
     img = cv2.imread("frame-000000.color.png", flags=1)
     imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -15,7 +16,6 @@ def Unet_feature_map():
     # plt.imshow(img)
     plt.imshow(imgRGB)
     plt.show()
-
 
     imgRGB = cv2.resize(imgRGB, (224, 224))
     imgRGB = (imgRGB / 255.0)
@@ -29,7 +29,7 @@ def Unet_feature_map():
     # img_tensor = img_tensor.unsquee
 
     transform = transforms.ToTensor()
-    img_Tensor = transform(imgRGB) # 形状和上面还不一样
+    img_Tensor = transform(imgRGB)  # 形状和上面还不一样
     # img_Tensor = img_Tensor
     img_Tensor = img_Tensor.float()
     img_Tensor = img_Tensor.unsqueeze(0)
@@ -37,7 +37,6 @@ def Unet_feature_map():
     # Example:
     # x = torch.randn(3, 4)
     # x = x.unsqueeze(0)
-
 
     model = Unet(3, 3)
     # print(model)
@@ -57,6 +56,7 @@ def Unet_feature_map():
     # plt.imshow(img)
     plt.imshow(feature_numpy)
     plt.show()
+
 
 if __name__ == "__main__":
     Unet_feature_map()
