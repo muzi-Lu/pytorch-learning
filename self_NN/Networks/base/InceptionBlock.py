@@ -40,3 +40,30 @@ class GoogleNet(nn.Module):
         self.with_aux = with_aux
         self.localrespnorm = nn.LocalResponseNorm()
         self.max_pool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+        self.conv1 = nn.Sequential(nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3),
+                                    nn.ReLU())
+        self.conv2 = nn.Sequential(nn.Conv2d(64, 64, kernel_size=1),
+                                    nn.ReLU(),
+                                    nn.Conv2d(64, 192, kernel_size=3, padding=1),
+                                    nn.ReLU())
+        self.incp3a = InceptionBlock(192, [64, (96, 128), (16, 32), 32])
+        self.incp3b = InceptionBlock(256, [128, (128, 192), (32, 96), 64])
+        self.incp4a = InceptionBlock(480, [192, (96, 208), (16, 48), 64])
+        self.incp4b = InceptionBlock(512, [160, (112, 224), (24, 64), 64])
+        self.incp4c = InceptionBlock(512, [128, (128, 256), (24, 64), 64])
+        self.incp4d = InceptionBlock(512, [112, (144, 288), (32, 64), 64])
+        self.incp4e = InceptionBlock(528, [256, (160, 320), (32, 128), 128])
+        self.incp5a = InceptionBlock(832, [256, (160, 320), (32, 128), 128])
+        self.incp5b = InceptionBlock(832, [384, (192, 384), (48, 128), 128])
+
+    def get_layers(self):
+        layers = []
+        layers.append(self.conv1)
+        layers.append(self.max_pool)
+        layers.append(self.localrespnorm)
+        layers.append(self.conv2)
+        layers.append(self.localrespnorm)
+        layers.append(self.max_pool)
+
+    def forward(self, x):
+        x = self.conv1(x)
