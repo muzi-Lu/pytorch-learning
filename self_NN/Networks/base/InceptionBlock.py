@@ -38,7 +38,7 @@ class GoogleNet(nn.Module):
     def __init__(self, with_aux=False):
         super(GoogleNet, self).__init__()
         self.with_aux = with_aux
-        self.localrespnorm = nn.LocalResponseNorm()
+        self.localrespnorm = nn.LocalResponseNorm(5)
         self.max_pool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.conv1 = nn.Sequential(nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3),
                                     nn.ReLU())
@@ -64,6 +64,30 @@ class GoogleNet(nn.Module):
         layers.append(self.conv2)
         layers.append(self.localrespnorm)
         layers.append(self.max_pool)
+        layers.append(self.incp3a)
+        layers.append(self.incp3b)
+        layers.append(self.max_pool)
+        layers.append(self.incp4a)
+        layers.append(self.incp4b)
+        layers.append(self.incp4c)
+        layers.append(self.incp4d)
+        layers.append(self.incp4e)
+        layers.append(self.max_pool)
+        layers.append(self.incp5a)
+        layers.append(self.incp5b)
+        return nn.Sequential(*layers)
+
+    def forward(self, x):
+        '''
+        not finished
+        :param x:
+        :return:
+        '''
+        x = self.conv1(x)
+        x = self.max_pool(x)
+        x = self.lrn(x)
+        x = self.conv2(x)
+        x = self.lrn(x)
 
     def forward(self, x):
         x = self.conv1(x)
