@@ -105,25 +105,46 @@ class BaseNet(nn.Module):
         for k, v in self.state_dict().items():
             print(k, v.size())
 
+
     def kaiming_normal_init_func_(self, m):
         classname = m.__class__.__name__
-        '''
-        Not finised
-        '''
+        if classname.find('Conv') != -1:
+            nn.init.kaiming_normal_(m.weight.data, mode='fan_out', nonlinearity='relu')
+            if m.bias is not None:
+                nn.init.constant_(m.bias.data, 0.0)
+        elif classname.find('BatchNorm2d') != -1:
+            nn.init.constant_(m.weight.data, 1.0)
+            nn.init.constant_(m.bias.data, 0.0)
+
 
     def xavier_init_func_(self, m):
         classname = m.__class__.__name__
-        '''
-        Not finised
-        '''
+        if classname.find('Conv') != -1:
+            nn.init.xavier_normal_(m.weight.data)
+            nn.init.constant_(m.bias.dat, 0.0)
+        elif classname.find('Linear') != -1:
+            nn.init.xavier_uniform_(m.weight.data)
+            nn.init.constant_(m.bias.data, 0.0)
+        elif classname.find('BatchNorm2d') != -1:
+            nn.init.normal_(m.weight.data, 1.0, 0.02)
+            nn.init.constant_(m.bias.data, 0)
+
     def normal_init_func(self, m):
         classname = m.__class__.__name__
-        '''
-        Not finised
-        '''
+        if classname.find('Conv') != -1:
+            nn.init.normal_(m.weight.data, 0.0, 0.02)
+        elif classname.find('Linear') != -1:
+            nn.init.normal_(m.weight.data, 0.0, 0.02)
+        elif classname.find('BatchNorm2d') != -1:
+            nn.init.normal_(m.weight.data, 0.0, 0.02)
+            nn.init.constant_(m.bias.data, 0.0)
 
     def fixed_weighting_loss(self, loss_pos, loss_rot, beta=1.0):
         return loss_pos + beta * loss_rot
 
     def learned_weighted_loss(self, loss_pos, loss_rot, sx, sq):
         return (-1 * sx).exp() * loss_pos + sx +(-1 * sq).exp() * loss_rot + sq
+
+    '''
+    nn.init下面的函数去搜一下是干什么的
+    '''

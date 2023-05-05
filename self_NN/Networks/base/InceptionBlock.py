@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+
 class InceptionBlock(nn.Module):
     def __init__(self, block_in, branch_out):
         super(InceptionBlock, self).__init__()
@@ -34,6 +35,7 @@ class InceptionBlock(nn.Module):
             output = [br_out0, br_out1, br_out2, br_out3]
             return torch.cat(output, 1)
 
+
 class GoogleNet(nn.Module):
     def __init__(self, with_aux=False):
         super(GoogleNet, self).__init__()
@@ -41,11 +43,11 @@ class GoogleNet(nn.Module):
         self.localrespnorm = nn.LocalResponseNorm(5)
         self.max_pool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.conv1 = nn.Sequential(nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3),
-                                    nn.ReLU())
+                                   nn.ReLU())
         self.conv2 = nn.Sequential(nn.Conv2d(64, 64, kernel_size=1),
-                                    nn.ReLU(),
-                                    nn.Conv2d(64, 192, kernel_size=3, padding=1),
-                                    nn.ReLU())
+                                   nn.ReLU(),
+                                   nn.Conv2d(64, 192, kernel_size=3, padding=1),
+                                   nn.ReLU())
         self.incp3a = InceptionBlock(192, [64, (96, 128), (16, 32), 32])
         self.incp3b = InceptionBlock(256, [128, (128, 192), (32, 96), 64])
         self.incp4a = InceptionBlock(480, [192, (96, 208), (16, 48), 64])
@@ -88,6 +90,24 @@ class GoogleNet(nn.Module):
         x = self.lrn(x)
         x = self.conv2(x)
         x = self.lrn(x)
+        x = self.max_pool(x)
+        x = self.incp3a(x)
+        x = self.incp3b(x)
+        x = self.max_pool(x)
+        x = self.incp4a(x)
+        aux1 = x
+        x = self.incp4b(x)
+        x = self.incp4c(x)
+        x = self.incp4b(x)
+        aux2 = x
+        x = self.incp4e(x)
+        x = self.max_pool(x)
+        x = self.incp5a(x)
+        x = self.incp5b(x)
+        aux3 = x
+        if self.training and self.with_aux:
+            return aux1, aux2, aux3
+        return aux3
 
     def forward(self, x):
         x = self.conv1(x)
