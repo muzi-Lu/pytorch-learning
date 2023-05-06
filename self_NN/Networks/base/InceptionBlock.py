@@ -109,6 +109,5 @@ class GoogleNet(nn.Module):
             return aux1, aux2, aux3
         return aux3
 
-    def forward(self, x):
-        x = self.conv1(x)
+
 '''why can not push to github'''

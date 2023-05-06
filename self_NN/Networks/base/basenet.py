@@ -46,7 +46,7 @@ class BaseNet(nn.Module):
         """
         Define how to calculate the loss for the network.
         Should be overridden by all subclasses, since different applications
-        or networks models may have different types of targets and the
+        or Networks models may have different types of targets and the
         corresponding criterions to evaluate the predictions
         :param batch:
         :return:
