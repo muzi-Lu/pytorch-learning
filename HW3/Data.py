@@ -7,6 +7,10 @@ train_tfm = transforms.Compose([
 
         ##### add more transforms here #####
         transforms.Resize((128, 128)),
+        transforms.RandomHorizontalFlip(),
+        transforms.RandomVerticalFlip(),
+        transforms.RandomRotation(30),
+        transforms.ColorJitter(brightness=0.5, hue=0.3),
         ##### added more here #####
         transforms.ToTensor(),
     ])
