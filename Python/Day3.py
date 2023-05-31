@@ -89,6 +89,19 @@ print(basket)
 print('orange' in basket)
 print('watermelon' in basket)
 
+tel = {'jack':4123, 'sape':4139}
+tel['guido'] = 4127
+
+for k, v in tel.items():
+    print(k, v)
+
+for i, v in enumerate(['tic', 'tac', 'toe']):
+    print(i, v)
+
+questions = ['name', 'quest', 'fav_color']
+answers = ['Tom', 'The holy grail', 'blue']
+for q, a in zip(questions, answers):
+    print('What is your {0}. It is {1}.'.format(q, a))
 # Module
 import sys
 import Module.support as support
