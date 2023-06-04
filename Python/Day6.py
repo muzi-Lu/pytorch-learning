@@ -89,3 +89,70 @@ class sample(speaker, student):
     def __init__(self, n, a, w, g, t):
         student.__init__(self, n, a, w, g)
         speaker.__init__(self, n, t)
+
+
+test = sample("Tim", 25, 80, 4, "Python")
+test.speak()
+
+
+class Parent:
+    def myMethod(self):
+        print('调用父类方法')
+
+class Child(Parent):
+    def myMethod(self):
+        print('调用子类方法')
+
+c = Child()
+c.myMethod()
+super(Child, c).myMethod()
+
+class JustCounter:
+    __secretCount = 0
+    publicCount = 0
+
+    def count(self):
+        self.__secretCount += 1
+        self.publicCount += 1
+        print(self.__secretCount)
+
+counter = JustCounter()
+counter.count()
+counter.count()
+print(counter.publicCount)
+# print(counter.__secretCount)
+
+class Site:
+    def __init__(self, name, url):
+        self.name = name
+        self.__url = url
+
+    def who(self):
+        print("name :", self.name)
+        print("url :", self.__url)
+
+    def __foo(self):
+        print("这个是私有方法")
+
+    def foo(self):
+        print("这个是公有方法")
+        self.__foo()
+
+x = Site("菜鸟驿站", "www.runoob.com")
+x.who()
+x.foo()
+# x.__foo()
+
+# Python Standard Library
+
+'''
+1. Os Module
+2. Sys Module
+3. Time Module
+4. Datatime Module
+5. Random Module
+6. Math Module
+7. Re Module
+8. Json Module
+9. Urllib Module 
+'''
