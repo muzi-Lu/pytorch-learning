@@ -177,3 +177,59 @@ print('y:{0}  y.grad_fn:{1}'.format(y, y.grad_fn))
 # 反向传播 计算梯度
 y.backward()
 print(x.grad) # 为什么是这个？
+
+x = torch.Tensor([
+    [2, 3],
+    [4, 5]
+])
+x.requires_grad = True
+y = x.sum()
+print('y:{0}  y.grad_fn:{1}'.format(y, y.grad_fn))
+y.backward()
+print(x.grad) # 为什么是这个？ # 知道怎么算了 y = x11+x12+x21+x22
+
+'''
+神经网络
+Autograd 实现了反向传播功能，但是直接写深度学习的代码在很多情况下还是很复杂的，torch.nn是专门为神经网络设计的模块化接口。
+nn构建在Autograd之上，可用于定义和运行神经网络.nn.Module是nn中最重要的类，可以把他看成一个网络的封装，包含网络各层定义以及forward方法，
+调用forward(input)方法，可返回前向传播的结构。
+下面以最早的卷积神经网络：LeNet
+'''
+
+import torch.nn as nn
+import torch.nn.functional as F
+
+'''
+定义网络
+定义网络时，需要继承nn.Module,并实现它的forward方法，把网络中具有可学习的参数的层放在构造函数__init__中。如果某一层(如Relu)不具有可学习的参数，
+则既可以放在构造函数中，也可以不放，但建议不放在里面，而是用forward中使用nn.functional代替
+'''
+class Net(nn.Module):
+    def __init__(self):
+        # nn.Module子类的函数必须在构造函数中执行父类的构造函数
+        # 下式等价于nn.Module.__init__(self)
+        super(Net, self).__init__()
+
+        # 卷积层‘1’表示输入图片为单通道， ‘6’表示输出通道数， ‘5’表示卷积核为5
+        self.conv1 = nn.Conv2d(1, 6, 5)
+        # Conv Layer
+        self.conv2 = nn.Conv2d(6, 16, 5)
+        # 全连接层, y=Wx+b
+        self.fc1 = nn.Linear(16*5*5, 120)
+        self.fc2 = nn.Linear(120, 84)
+        self.fc3 = nn.Linear(84, 10)
+
+    def forward(self, x):
+        # 卷积 --> 激活 --> 池化
+        x = F.max_pool2d(F.relu(self.conv1(x)), (2, 2))
+        x = F.max_pool2d(F.relu(self.conv2(x), 2))
+        # reshape ,-1表示自适应
+        x = x.view(x.size()[0], -1)
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)
+        return x
+
+net = Net()
+print(net)
+
