@@ -222,7 +222,7 @@ class Net(nn.Module):
     def forward(self, x):
         # 卷积 --> 激活 --> 池化
         x = F.max_pool2d(F.relu(self.conv1(x)), (2, 2))
-        x = F.max_pool2d(F.relu(self.conv2(x), 2))
+        x = F.max_pool2d(F.relu(self.conv2(x)), 2)
         # reshape ,-1表示自适应
         x = x.view(x.size()[0], -1)
         x = F.relu(self.fc1(x))
@@ -232,4 +232,85 @@ class Net(nn.Module):
 
 net = Net()
 print(net)
+print("----------------------------------------------------------------------------------")
+'''
+只要在nn.Module的子类中定义了forward函数， backward函数就会自动被实现（利用autograd)。在forward函数中可以使用任何tensor支持的函数，
+还可以使用if， for循环， print函数， log等Python语法，写法和标准的Python写法一致。
 
+网络的可学习参数通过net.parameters()[nn.Module.parameters()可同时返回可学习的参数以及名称。]
+'''
+print("----------------------------------------------------------------------------------")
+params = list(net.parameters())
+print('length of the params: ', list(net.parameters()))
+print(len(params))
+
+'''
+# net.named_parameters 可同时返回可学习的参数以及名称
+'''
+for name,paraneters in net.named_parameters():
+    print(name, ':', paraneters.size())
+
+input = torch.randn(1, 1, 32, 32)
+out = net(input)
+print(out.type)
+
+print(net.zero_grad()) # 所有参数的梯度清零
+print(out.backward(torch.ones(1, 10)))
+
+'''
+需要注意的是， torch.nn只支持mini-batches，不支持一次只输入一个样本，即一次必须是一个batch。但如果只想输入一个样本，则用input.unsqueeze(0)将
+batch_size设置为1。
+例如：nn.Conv2d输入必须是4维的，形如nSamples x nChannels x Height x Width。
+可将nSample设为1
+'''
+
+out = net(input)
+target = torch.arange(0, 10).view(1, 10).float() # torch.arange()创建了一个从0-9的一维张量，接着用view()
+print(target)
+criterion = nn.MSELoss()
+loss = criterion(out, target)
+# loss is a scalar
+print(loss)
+
+'''
+loss
+
+input -> conv2d -> relu -> maxpool2d -> conv2d -> relu -> maxpool2d
+-> view -> linear -> relu -> linear -> relu -> linear
+-> MSELoss
+-> loss
+
+loss.backward()
+'''
+# backward
+net.zero_grad()
+print('')
+print(net.conv1.bias.grad)
+loss.backward()
+print('')
+print(net.conv1.bias.grad)
+
+
+'''
+Optimizer
+
+not finished
+'''
+import torch.optim as optim
+#
+optimizer = optim.SGD(net.parameters(), lr=0.01)
+
+#
+#
+optimizer.zero_grad()
+
+# Cal Loss
+output = net(input)
+criterion = nn.MSELoss()
+loss = criterion(output, target)
+
+#
+loss.backward()
+
+#
+optimizer.step()
