@@ -3,6 +3,7 @@
 
 '''
 import torch
+
 '''
 3.1.1 基础操作
 tensor的接口和Numpy相似，以方便用户使用。但不熟悉Numpy也先没有关系
@@ -35,8 +36,8 @@ print('a:', a)
 
 b = torch.Tensor(
     [
-    [1, 2],
-    [3, 4]
+        [1, 2],
+        [3, 4]
     ])
 print('b:', b)
 
@@ -106,24 +107,24 @@ print(a)
 a = a.view(2, 3)
 print(a)
 
-b = a.view(-1, 3) # 当某一维为-1的时候，会自动计算他的大小
+b = a.view(-1, 3)  # 当某一维为-1的时候，会自动计算他的大小
 print(b)
 
-b = b.unsqueeze(1) # 注意形状， 在第一维(下标从0开始)上增加‘1’
-print('why:', a[:, None].shape) # 这个梅东
+b = b.unsqueeze(1)  # 注意形状， 在第一维(下标从0开始)上增加‘1’
+print('why:', a[:, None].shape)  # 这个梅东
 '''
 # None类似于np.newaxis, 为a新增了一个轴
 '''
 print(b.shape)
 
-print(b.unsqueeze(-2).shape) # -2表示倒数第二个维度
+print(b.unsqueeze(-2).shape)  # -2表示倒数第二个维度
 
 c = b.view(1, 2, 1, 1, 3)
 print(c.shape)
 c = c.squeeze(0)
 print(c.shape)
 
-c = c.squeeze() # 把所有维度为1的压缩
+c = c.squeeze()  # 把所有维度为1的压缩
 print(c.shape)
 
 a[1] = 100
@@ -165,8 +166,8 @@ print('a[0-1]:', a[:2])
 print('a[0-1][0-1]:', a[:2, :2])
 
 # # 注意两者的区别：形状不同
-print(a[0:1, :2]) # 第0行，前两列
-print(a[0, :2]) # 注意两者的区别：形状不同
+print(a[0:1, :2])  # 第0行，前两列
+print(a[0, :2])  # 注意两者的区别：形状不同
 
 # None类似于np.newaxis, 为a新增了一个轴
 '''
@@ -178,13 +179,13 @@ print(a[:, :, None].shape)
 # 等价于a.view(1, a.shape[0], a.shape[1])
 
 
-print(a[:,None,:,None,None].shape)
+print(a[:, None, :, None, None].shape)
 
-print(a>1)
-print(a[a>1]) # 等价于a.masked_select(a>1)
+print(a > 1)
+print(a[a > 1])  # 等价于a.masked_select(a>1)
 # 选择结果与原tensor不共享内存空间)
 
-print(a[torch.LongTensor([0,1])]) # 第0行和第1行)
+print(a[torch.LongTensor([0, 1])])  # 第0行和第1行)
 
 '''
 表3-2常用的选择函数
@@ -203,7 +204,7 @@ print(a)
 # 选取对角线的元素
 index = torch.LongTensor([[0, 1, 2, 3]])
 print(index)
-print(a.gather(0, index)) # messi
+print(a.gather(0, index))  # messi
 
 # 选取反对角线上的元素
 index = torch.LongTensor([[3, 2, 1, 0]]).t()
@@ -222,7 +223,7 @@ print(a.gather(0, index))
 # print(result)
 
 # 选取两个对角线上的元素
-index = torch.LongTensor([[0,1,2,3],[3,2,1,0]]).t()
+index = torch.LongTensor([[0, 1, 2, 3], [3, 2, 1, 0]]).t()
 b = a.gather(1, index)
 print(b)
 
@@ -243,7 +244,6 @@ d = a[0:1, 0:1, None]
 print(d.shape)
 print(d.item())
 
-
 '''
 高级索引
 PyTorch在0.2版本中完善了索引操作，目前已经支持绝大多数numpy的高级索引[^10]。高级索引可以看成是普通索引操作的扩展，但是高级索引操作的结果一般不和原始的Tensor共享内存。 
@@ -253,7 +253,6 @@ x = torch.arange(0, 27).view(3, 3, 3)
 print(x)
 print(x[[1, 2], [1, 2], [2, 0]])
 print(x[[2, 1, 0], [0], [1]])
-
 
 '''
 Tensor类型
@@ -282,3 +281,60 @@ Data    type	                     dtype	                 CPU tensor	        GPU 
 可以生成和tensora拥有同样属性(类型，形状，cpu/gpu)的新tensor。
  tensor.new_*(new_shape) 新建一个不同形状的tensor。
 '''
+
+'''
+逐元素操作
+
+'''
+a = torch.arange(0, 6).view(2, 3).float()
+print(torch.cos(a))
+
+print(a % 3)
+
+print(a ** 2)
+
+print(torch.clamp(a, min=3))
+
+'''
+归并操作
+'''
+
+b = torch.ones(2, 3)
+print(b.sum(dim=0, keepdim=True))
+print(b.sum(dim=0, keepdim=False))
+
+print(b.sum(dim=1))
+
+'''
+比较操作
+'''
+a = torch.linspace(0, 15, 6).view(2, 3)
+print(a)
+b = torch.linspace(15, 0, 6).view(2, 3)
+print(b)
+print(a>b)
+print(a[a>b])
+print(torch.max(a))
+
+'''
+线性代数
+'''
+
+
+'''
+3.1.2 Tensor和Numpy
+'''
+import numpy as np
+a = np.ones([2, 3], dtype=np.float32)
+print(a)
+
+b = torch.from_numpy(a)
+print(b)
+
+a[0, 1] = 100
+b[0][0] = 2
+print(a)
+print(b)
+
+c = b.numpy()
+print(c)
