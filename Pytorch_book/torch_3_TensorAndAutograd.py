@@ -297,6 +297,14 @@ print(torch.clamp(a, min=3))
 
 '''
 归并操作
+此类操作会输出形状小于输入形状，并可以沿着某一维度进行指定操作。如加法sum，既可以计算整个
+tensor的和，也可以计算tensor中每一行或者每一列的和。常见的归并操作如表3-5所示。
+
+    函数                               功能
+mean/sum/median/mode              均值/和/中位数/众数
+norm/dist                            范数/距离
+std/var                              标准差/方差
+cumsum/cumprod                        累加/累乘   
 '''
 
 b = torch.ones(2, 3)
@@ -312,19 +320,36 @@ a = torch.linspace(0, 15, 6).view(2, 3)
 print(a)
 b = torch.linspace(15, 0, 6).view(2, 3)
 print(b)
-print(a>b)
-print(a[a>b])
+print(a > b)
+print(a[a > b])
 print(torch.max(a))
 
 '''
-线性代数
+函数	功能
+trace	对角线元素之和(矩阵的迹)
+diag	对角线元素
+triu/tril	矩阵的上三角/下三角，可指定偏移量
+mm/bmm	矩阵乘法，batch的矩阵乘法
+addmm/addbmm/addmv/addr/badbmm..	矩阵运算
+t	转置
+dot/cross	内积/外积
+inverse	求逆矩阵
+svd	奇异值分解
 '''
 
+a = torch.randn(3, 3)
+print(a)
+b = a.t()
+print(b, b.is_contiguous())
+print(b.contiguous())
 
 '''
 3.1.2 Tensor和Numpy
+Tensor和Numpy数组之间具有很高的相似性，彼此之间的互操作也非常简单高效。需要注意的是，Numpy和Tensor共享内存。
+由于Numpy历史悠久，支持丰富的操作，所以当遇到Tensor不支持的操作时，可先转成Numpy数组，处理后再转回tensor，其转换开销很小。
 '''
 import numpy as np
+
 a = np.ones([2, 3], dtype=np.float32)
 print(a)
 
@@ -337,4 +362,49 @@ print(a)
 print(b)
 
 c = b.numpy()
+print(c, c.dtype)
+
+# 注意： 当numpy的数据类型和Tensor的类型不一样的时候，数据会被复制，不会共享内存。
+
+a = np.ones([2, 3])
+print(a.dtype)
+
+b = torch.Tensor(a) # 此处进行拷贝，不共享内存
+print(b.dtype)
+
+c = torch.from_numpy(a) # 注意c的类型（DoubleTensor）
 print(c)
+
+a[0, 1] = 100
+print(b)
+print(c)
+# 注意： 不论输入的类型是什么，t.tensor都会进行数据拷贝，不会共享内存
+
+'''
+广播法则(broadcast)是科学运算中经常使用的一个技巧，它在快速执行向量化的同时不会占用额外的内存/显存。 Numpy的广播法则定义如下：
+
+让所有输入数组都向其中shape最长的数组看齐，shape中不足的部分通过在前面加1补齐
+两个数组要么在某一个维度的长度一致，要么其中一个为1，否则不能计算
+当输入数组的某个维度的长度为1时，计算时沿此维度复制扩充成一样的形状
+PyTorch当前已经支持了自动广播法则，但是笔者还是建议读者通过以下两个函数的组合手动实现广播法则，这样更直观，更不易出错：
+
+unsqueeze或者view，或者tensor[None],：为数据某一维的形状补1，实现法则1
+expand或者expand_as，重复数组，实现法则3；该操作不会复制数组，所以不会占用额外的空间。
+注意，repeat实现与expand相类似的功能，但是repeat会把相同数据复制多份，因此会占用额外的空间。
+'''
+
+a = torch.ones(3, 2)
+b = torch.zeros(2, 3, 1)
+# 自动广播法则
+# 第一步：a是2维,b是3维，所以先在较小的a前面补1 ，
+#               即：a.unsqueeze(0)，a的形状变成（1，3，2），b的形状是（2，3，1）,
+# 第二步:   a和b在第一维和第三维形状不一样，其中一个为1 ，
+#               可以利用广播法则扩展，两个形状都变成了（2，3，2）
+print(a+b)
+
+# 手动广播法则
+# 或者 a.view(1,3,2).expand(2,3,2)+b.expand(2,3,2)
+a[None].expand(2, 3, 2) + b.expand(2, 3, 2)
+
+# expand不会占用额外空间，只会在需要的时候才扩充，可极大节省内存
+e = a.unsqueeze(0).expand(10000000000000, 3, 2)
