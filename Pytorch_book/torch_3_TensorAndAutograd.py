@@ -408,3 +408,53 @@ a[None].expand(2, 3, 2) + b.expand(2, 3, 2)
 
 # expand不会占用额外空间，只会在需要的时候才扩充，可极大节省内存
 e = a.unsqueeze(0).expand(10000000000000, 3, 2)
+
+'''
+tensor的数据结构如图3-1所示。tensor分为头信息区(Tensor)和存储区(Storage)，信息区主要保存着tensor的形状（size）、步长（stride）、数据类型（type）等信息，而真正的数据则保存成连续数组。
+由于数据动辄成千上万，因此信息区元素占用内存较少，主要内存占用则取决于tensor中元素的数目，也即存储区的大小。
+
+一般来说一个tensor有着与之相对应的storage, storage是在data之上封装的接口，便于使用，而不同tensor的头信息一般不同，但却可能使用相同的数据。下面看两个例子。
+'''
+a = torch.arange(0, 6)
+print(a.storage())
+
+b = a.view(2, 3)
+print(b.storage())
+
+# 一个对象的id值可以看作它在内存中的地址
+# storage的内存地址一样，即是同一个storage
+print(id(b.storage()) == id(a.storage()))
+
+# a改变，b也随之改变，因为他们共享storage
+a[1] = 100
+print(a, b)
+
+c = a[2:]
+print(c)
+print(c.storage())
+c[0] = -100
+print(a)
+
+d = torch.LongTensor(c.storage())
+d[0] = 6666
+print(b)
+
+print(id(a.storage()) == id(b.storage()) == id(c.storage()) == id(d.storage()))
+
+print(a.storage_offset(), c.storage_offset(), d.storage_offset())
+
+'''
+可见绝大多数操作并不修改tensor的数据，而只是修改了tensor的头信息。这种做法更节省内存，同时提升了处理速度。在使用中需要注意。 
+此外有些操作会导致tensor不连续，这时需调用tensor.contiguous方法将它们变成连续的数据，该方法会使数据复制一份，不再与原来的数据共享storage。 
+另外读者可以思考一下，之前说过的高级索引一般不共享stroage，而普通索引共享storage，这是为什么？
+（提示：普通索引可以通过只修改tensor的offset，stride和size，而不修改storage来实现）。
+'''
+
+'''
+3.1.4 其它有关Tensor的话题
+
+这部分的内容不好专门划分一小节，但是笔者认为仍值得读者注意，故而将其放在这一小节。
+
+GPU/CPU
+tensor可以很随意的在gpu/cpu上传输。使用tensor.cuda(device_id)或者tensor.cpu()。另外一个更通用的方法是tensor.to(device)。
+'''
