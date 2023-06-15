@@ -23,7 +23,7 @@ def main():
     # 大约100M，需要一定时间
     # 如果已经下载有CIFAR-10，可通过root参数指定
 
-    transform = transforms.Compose([
+    transform = tv.transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
     ])
@@ -50,7 +50,7 @@ def main():
         transform=transform
     )
 
-    testdataloader = DataLoader(
+    testloader = DataLoader(
         trainset,
         batch_size=4,
         shuffle=False,
@@ -59,9 +59,12 @@ def main():
 
     # 试验一下
     (data, label) = trainset[100]
-    print(classes[label])
-    show((data + 1) / 2).resize((100, 100))
+    # print(trainset[100])
+    # print(classes[label])
 
+
+    # dataiter = iter(trainloader)
+    # images, labels = dataiter.next()
 
 if __name__ == '__main__':
     main()
