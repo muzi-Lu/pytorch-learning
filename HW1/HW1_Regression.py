@@ -99,7 +99,7 @@ def trainer(train_loader, valid_loader, model, config, device):
             print('\nModel is not improving, so we halt the training session.')
             return
 
-
+# 6/16 debugging
 if __name__ == '__main__':
     print("Starting HW1")
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
