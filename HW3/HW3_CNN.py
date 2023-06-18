@@ -15,6 +15,7 @@ import random
 from Data import FoodDataset
 from Model import Classifier
 from Utils import seed, train_tfm, test_tfm
+
 ##### self-made #####
 
 
@@ -43,12 +44,10 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(model.parameters(), lr=0.0003, weight_decay=1e-5)
     ##### One : Prepare Datasets and Dataloaders #####
 
-
     train_set = FoodDataset("/media/benben/0ECABB60A248B50C/HWHomework/datasets/3/train", tfm=train_tfm)
     train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=True)
     valid_set = FoodDataset("/media/benben/0ECABB60A248B50C/HWHomework/datasets/3/valid", tfm=test_tfm)
     valid_loader = DataLoader(valid_set, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=True)
-
 
     ##### Starting Training #####
     # Initialize trackers, these are not parameters and should not be changed
@@ -60,20 +59,18 @@ if __name__ == '__main__':
         # Make sure your model is in train code before training
         model.train()
 
-        #These are used to record information in training
+        # These are used to record information in training
         train_loss = []
         train_accs = []
 
         for batch in tqdm(train_loader):
             imgs, labels = batch
-            print(imgs.shape, labels.shape)
-            print(imgs.dtype, labels.dtype)
-            print(labels)
-
+            # print(imgs.shape, labels.shape)
+            # print(imgs.dtype, labels.dtype)
+            # print(labels)
 
             # put images into model and Forward the data (make sure data and model are on the same device)
             logits = model(imgs.to(device))
-
 
             # Calculate the cross-entropy loss
             loss = criterion(logits, labels.to(device))
@@ -99,7 +96,3 @@ if __name__ == '__main__':
 
         train_loss = sum(train_loss) / len(train_loss)
         train_acc = sum(train_accs) / len(train_accs)
-
-
-
-

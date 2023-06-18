@@ -5,4 +5,68 @@ torch.autograd就是为方便用户使用，而专门开发的一套自动求导
 
 计算图(Computation Graph)是现代深度学习框架如PyTorch和TensorFlow等的核心，其为高效自动求导算法——反向传播(Back Propogation)提供了理论支持，
 了解计算图在实际写程序过程中会有极大的帮助。本节将涉及一些基础的计算图知识，但并不要求读者事先对此有深入的了解。关于计算图的基础知识推荐阅读Christopher Olah的文章^1。
+# colah.github.io/posts/2015-08-Backprop
 '''
+
+from __future__ import print_function
+import torch
+
+# 在创建tensor的时候指定requires_grad
+a = torch.randn(3, 4, requires_grad=True)
+# 或者
+a = torch.randn(3, 4).requires_grad_()
+# 或者
+a = torch.randn(3, 4)
+a.requires_grad = True
+print(a)
+
+b = torch.zeros(3, 4, requires_grad=True)
+print(b)
+
+c = a.add(b)
+print(c)
+
+d = c.sum()
+d.backward() # 这个就是反向传播
+
+print(d) # d还是一个requires_grad=True的Tensor,对他的操作需要慎重
+print(d.requires_grad)
+
+print('a:', a.grad)
+print('b:', b.grad)
+
+# 此处虽然没有指定c需要求导，但c依赖于a，而a需要求导
+# 因此c的requires_grad属性会自动设置为True
+print(a.requires_grad, b.requires_grad, c.requires_grad)
+
+# 由用户创建的variable属于叶子节点，对应的grad_fn是None
+print(a.is_leaf, b.is_leaf, c.is_leaf)
+
+# c.grad是None,因C不是叶子节点，他的梯度是用于计算a的梯度
+# 所以虽然c.requires_grad = True,但其梯度计算完之后被释放
+# print(c.grad is None)
+
+def f(x):
+    y = x**2 * torch.exp(x)
+    return y
+
+def gradf(x):
+    dx = 2 * x * torch.exp(x) + x**2 * torch.exp(x)
+    return dx
+
+x = torch.randn(3, 4, requires_grad=True)
+print('x:', x)
+y = f(x)
+print('y:', y)
+
+y.backward(torch.ones(y.size()))
+print('x.grad:', x.grad)
+
+print('gradf(x):', gradf(x))
+# 这个为什么不一样阿
+
+x = torch.ones(1)
+b = torch.randn(1, requires_grad=True)
+w = torch.randn(1, requires_grad=True)
+y = w*x
+z = y+b
