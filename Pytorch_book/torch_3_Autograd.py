@@ -65,8 +65,39 @@ print('x.grad:', x.grad)
 print('gradf(x):', gradf(x))
 # 这个为什么不一样阿
 
+# Pytorch中autograd的底层用了计算图，计算图是一种特殊的有向五环图，用于记录算子和变量之间的关系，一般用矩阵表示算子，椭圆表示变量，如表达式
+# z = wx + b 可以拆分为 y = wx 和 z = y + b。
 x = torch.ones(1)
 b = torch.randn(1, requires_grad=True)
 w = torch.randn(1, requires_grad=True)
-y = w*x
-z = y+b
+y = w * x
+z = y + b
+
+print(x.requires_grad, b.requires_grad, w.requires_grad)
+
+# 虽然没有指定y.requires_grad为True,但由于y依赖于需要求导的w
+# 故而requires_grad为True
+
+print(y.requires_grad)
+
+print(x.is_leaf, w.is_leaf, b.is_leaf)
+
+print(y.is_leaf, z.is_leaf)
+
+# grad_fn可以查看这个variable的反向传播函数
+# z是add函数的输出，所以他的反向传播函数是AddBackward
+print(z.grad_fn) # <AddBackward0 object at 0x7fab39ea6590>
+
+# next_functions保存grad_fn的输入，是一个tuple，tuple的元素也是Function
+# 第一个是y，他是乘法的输出，所以对应的反向传播函数y.grad_fn是MulBackward
+# 第二个是b，它是叶子节点，由用户创建，grad_fn为None，但是有
+print(z.grad_fn.next_functions)
+
+# 第一个是w,叶子节点，需要求导，梯度是累加的
+# 第二个是x,叶子节点，不需要求导，所以为None
+print(y.grad_fn.next_functions)
+
+# 叶子节点的grad_fn是None
+print(w.grad_fn, x.grad_fn)
+
+# 计算w的梯度的时候，需要用
