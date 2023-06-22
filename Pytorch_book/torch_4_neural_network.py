@@ -379,7 +379,7 @@ base_params = filter(lambda p: id(p) not in special_layers_params,
 optimizer = torch.optim.SGD([
             {'params': base_params},
             {'params': special_layers.parameters(), 'lr': 0.01}
-        ], lr=0.001 )
+        ], lr=0.001)
 print(optimizer)
 
 # 方法1: 调整学习率，新建一个optimizer
@@ -393,7 +393,7 @@ print(optimizer1)
 # 方法2: 调整学习率, 手动decay, 保存动量
 for param_group in optimizer.param_groups:
     param_group['lr'] *= 0.1 # 学习率为之前的0.1倍
-optimizer
+print(optimizer)
 
 '''
 4.3 nn.functional
@@ -403,3 +403,168 @@ nn.functional中的函数和nn.Module的主要区别在于，用nn.Module实现�
 而nn.functional中的函数更像是纯函数，由def function(input)定义。下面举例说明functional的使用，并指出二者的不同之处。
 '''
 
+input = torch.randn(2, 3)
+model = nn.Linear(3, 4)
+output1 = model(input)
+output2 = nn.functional.linear(input, model.weight, model.bias)
+print(output1 == output2)
+
+
+b = nn.functional.relu(input)
+b2 = nn.ReLU()(input)
+print(b == b2)
+
+'''
+此时读者可能会问，应该什么时候使用nn.Module，什么时候使用nn.functional呢？
+答案很简单，如果模型有可学习的参数，最好用nn.Module，否则既可以使用nn.functional也可以使用nn.Module，二者在性能上没有太大差异，具体的使用取决于个人的喜好。
+如激活函数（ReLU、sigmoid、tanh），池化（MaxPool）等层由于没有可学习参数，则可以使用对应的functional函数代替，而对于卷积、全连接等具有可学习参数的网络建议使用nn.Module。
+下面举例说明，如何在模型中搭配使用nn.Module和nn.functional。另外虽然dropout操作也没有可学习操作，但建议还是使用nn.Dropout而不是nn.functional.dropout，
+因为dropout在训练和测试两个阶段的行为有所差别，使用nn.Module对象能够通过model.eval操作加以区分。
+'''
+
+from torch.nn import functional as F
+class Net(nn.Module):
+    def __init__(self):
+        super(Net, self).__init__()
+        self.conv1 = nn.Conv2d(3, 6, 5)
+        self.conv2 = nn.Conv2d(6, 16, 5)
+        self.fc1 = nn.Linear(16 * 5 * 5, 120)
+        self.fc2 = nn.Linear(120, 84)
+        self.fc3 = nn.Linear(84, 10)
+
+    def forward(self, x):
+        x = F.pool(F.relu(self.conv1(x)), 2)
+        x = F.pool(F.relu(self.conv1(x)), 2)
+        x = x.view(-1, 16 * 5 * 5)
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)
+        return x
+
+'''
+对于不具备可学习参数的层（激活层、池化层等），将它们用函数代替，这样则可以不用放置在构造函数__init__中。
+对于有可学习参数的模块，也可以用functional来代替，只不过实现起来较为繁琐，需要手动定义参数parameter，如前面实现自定义的全连接层，就可将weight和bias两个参数单独拿出来，
+在构造函数中初始化为parameter。
+
+'''
+
+
+'''
+在深度学习中参数的初始化十分重要，良好的初始化能让模型更快收敛，并达到更高水平，而糟糕的初始化则可能使得模型迅速瘫痪。
+PyTorch中nn.Module的模块参数都采取了较为合理的初始化策略，因此一般不用我们考虑，当然我们也可以用自定义初始化去代替系统的默认初始化。
+而当我们在使用Parameter时，自定义初始化则尤为重要，因t.Tensor()返回的是内存中的随机数，很可能会有极大值，这在实际训练网络中会造成溢出或者梯度消失。 # 自己的程序会不会是这个问题
+
+PyTorch中nn.init模块就是专门为初始化而设计，如果某种初始化策略nn.init不提供，用户也可以自己直接初始化。
+'''
+
+# 利用nn.init初始化
+from torch.nn import init
+linear = nn.Linear(3, 4)
+
+torch.manual_seed(1)
+# 等价于linear.weight.data.normal_(0, std)
+init.xavier_normal_(linear.weight)
+print(linear.weight)
+
+# 直接初始化
+import math
+torch.manual_seed(1)
+
+# xavier初始化的计算公式
+std = math.sqrt(2)/math.sqrt(7.)
+linear.weight.data.normal_(0,std)
+print(linear.weight)
+
+'''
+如果想要更深入地理解nn.Module，究其原理是很有必要的。首先来看看nn.Module基类的构造函数：
+
+def __init__(self):
+    self._parameters = OrderedDict()
+    self._modules = OrderedDict()
+    self._buffers = OrderedDict()
+    self._backward_hooks = OrderedDict()
+    self._forward_hooks = OrderedDict()
+    self.training = True
+其中每个属性的解释如下：
+
+_parameters：字典，保存用户直接设置的parameter，self.param1 = nn.Parameter(t.randn(3, 3))会被检测到，在字典中加入一个key为'param'，value为对应parameter的item。
+而self.submodule = nn.Linear(3, 4)中的parameter则不会存于此。
+
+_modules：子module，通过self.submodel = nn.Linear(3, 4)指定的子module会保存于此。
+_buffers：缓存。如batchnorm使用momentum机制，每次前向传播需用到上一次前向传播的结果。
+_backward_hooks与_forward_hooks：钩子技术，用来提取中间变量，类似variable的hook。
+training：BatchNorm与Dropout层在训练阶段和测试阶段中采取的策略不同，通过判断training值来决定前向传播策略。
+上述几个属性中，_parameters、_modules和_buffers这三个字典中的键值，都可以通过self.key方式获得，效果等价于self._parameters['key'].
+
+'''
+
+print('--------------------------------------------')
+class Net(nn.Module):
+    def __init__(self):
+        super(Net, self).__init__()
+        self.param1 = nn.Parameter(torch.rand(3, 3))
+        self.submodel1 = nn.Linear(3, 4)
+
+    def forward(self, input):
+        x = self.param1.mm(input)
+        x = self.submodel1(x)
+        return x
+
+net = Net()
+print(net)
+
+print(net.param1)
+print(net.submodel1)
+
+for name, param in net.named_parameters():
+    print(name, param.size())
+
+print(net._modules)
+print(net._parameters)
+
+'''
+nn.Module在实际使用中可能层层嵌套，一个module包含若干个子module，每一个子module又包含了更多的子module。
+为方便用户访问各个子module，nn.Module实现了很多方法，如函数children可以查看直接子module，函数module可以查看所有的子module（包括当前module）。
+与之相对应的还有函数named_childen和named_modules，其能够在返回module列表的同时返回它们的名字。
+'''
+
+input = torch.arange(0, 12).view(3, 4).float()
+model = nn.Dropout()
+output = model(input)
+print(output)
+
+
+model.training  = False
+# 在测试阶段，dropout什么都不做
+output = model(input)
+print(output)
+
+'''
+对于batchnorm、dropout、instancenorm等在训练和测试阶段行为差距巨大的层，如果在测试时不将其training值设为True，则可能会有很大影响，这在实际使用中要千万注意。
+虽然可通过直接设置training属性，来将子module设为train和eval模式，但这种方式较为繁琐，因如果一个模型具有多个dropout层，就需要为每个dropout层指定training属性。
+更为推荐的做法是调用model.train()函数，它会将当前module及其子module中的所有training属性都设为True，相应的，model.eval()函数会把training属性都设为False。
+'''
+
+'''
+Important:
+nn.Module对象在构造函数中的行为看起来有些怪异，如果想要真正掌握其原理，就需要看两个魔法方法__getattr__和__setattr__。在Python中有两个常用的buildin方法getattr和setattr，getattr(obj, 'attr1')等价于obj.attr，如果getattr函数无法找到所需属性，Python会转而调用obj.__getattr__('attr1')方法，即getattr函数无法找到的交给__getattr__函数处理，没有实现__getattr__或者__getattr__也无法处理的就会raise AttributeError。setattr(obj, 'name', value)等价于obj.name=value，如果obj对象实现了__setattr__方法，setattr会直接调用obj.__setattr__('name', value)，否则调用buildin方法。总结一下：
+
+result = obj.name会调用buildin函数getattr(obj, 'name')，如果该属性找不到，会调用obj.__getattr__('name')
+obj.name = value会调用buildin函数setattr(obj, 'name', value)，如果obj对象实现了__setattr__方法，setattr会直接调用obj.__setattr__('name', value')
+nn.Module实现了自定义的__setattr__函数，当执行module.name=value时，会在__setattr__中判断value是否为Parameter或nn.Module对象，如果是则将这些对象加到_parameters和_modules两个字典中，而如果是其它类型的对象，如Variable、list、dict等，则调用默认的操作，将这个值保存在__dict__中
+
+'''
+
+'''
+4.6 nn和autograd的关系
+nn.Module利用的也是autograd技术，其主要工作是实现前向传播。在forward函数中，nn.Module对输入的tensor进行的各种操作，本质上都是用到了autograd技术。
+这里需要对比autograd.Function和nn.Module之间的区别：
+
+autograd.Function利用了Tensor对autograd技术的扩展，为autograd实现了新的运算op，不仅要实现前向传播还要手动实现反向传播
+nn.Module利用了autograd技术，对nn的功能进行扩展，实现了深度学习中更多的层。只需实现前向传播功能，autograd即会自动实现反向传播
+nn.functional是一些autograd操作的集合，是经过封装的函数
+
+作为两大类扩充PyTorch接口的方法，我们在实际使用中应该如何选择呢？如果某一个操作，在autograd中尚未支持，那么只能实现Function接口对应的前向传播和反向传播。
+如果某些时候利用autograd接口比较复杂，则可以利用Function将多个操作聚合，实现优化，正如第三章所实现的Sigmoid一样，比直接利用autograd低级别的操作要快。
+而如果只是想在深度学习中增加某一层，使用nn.Module进行封装则更为简单高效。
+'''
